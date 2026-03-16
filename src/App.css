@@ -837,6 +837,147 @@
 }
 
 /* ============================
+   ART PANEL
+   ============================ */
+
+.art-pane {
+  background: #0f0f14;
+  overflow: hidden;
+  padding: 0;
+}
+
+.art-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.art-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.art-toolbar-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-bright);
+  background: linear-gradient(135deg, var(--accent), var(--pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.art-mode-switcher {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.art-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.art-mode-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.art-mode-btn:hover {
+  border-color: var(--text-muted);
+}
+
+.art-mode-label {
+  display: inline;
+}
+
+.art-stage {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.art-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.art-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.art-empty-icon {
+  font-size: 48px;
+  animation: float 4s ease-in-out infinite;
+}
+
+.art-caption {
+  padding: 8px 20px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+  text-align: center;
+}
+
+.art-hint {
+  opacity: 0.5;
+}
+
+/* Server sync badge */
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.server-badge {
+  font-size: 12px;
+  color: var(--green);
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.welcome-sub {
+  color: var(--text-muted);
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+/* ============================
    RESPONSIVE
    ============================ */
 

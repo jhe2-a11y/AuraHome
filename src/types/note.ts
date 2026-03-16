@@ -22,4 +22,4 @@ export interface Note {
   emoji: string;
 }
 
-export type ViewMode = 'editor' | 'notebook' | 'split';
+export type ViewMode = 'editor' | 'notebook' | 'split' | 'art';

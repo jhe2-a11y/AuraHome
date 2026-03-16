@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+aurahome.db
+aurahome.db-shm
+aurahome.db-wal

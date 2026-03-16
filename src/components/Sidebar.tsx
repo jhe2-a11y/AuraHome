@@ -6,6 +6,7 @@ interface SidebarProps {
   viewMode: ViewMode;
   searchQuery: string;
   allTags: string[];
+  useServer: boolean;
   onSelectNote: (id: string) => void;
   onCreateNote: () => void;
   onDeleteNote: (id: string) => void;
@@ -30,6 +31,7 @@ export function Sidebar({
   viewMode,
   searchQuery,
   allTags,
+  useServer,
   onSelectNote,
   onCreateNote,
   onDeleteNote,
@@ -41,6 +43,7 @@ export function Sidebar({
       <div className="sidebar-brand">
         <span className="brand-icon">✦</span>
         <h1>AuraHome</h1>
+        {useServer && <span className="sync-dot" title="Synced to server" />}
       </div>
 
       <button className="btn-new-note" onClick={onCreateNote}>
@@ -78,6 +81,13 @@ export function Sidebar({
           title="Notebook only"
         >
           📓
+        </button>
+        <button
+          className={viewMode === 'art' ? 'active' : ''}
+          onClick={() => onSetViewMode('art')}
+          title="Art mode — visualize your notes"
+        >
+          🎨
         </button>
       </div>
 

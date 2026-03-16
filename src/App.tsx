@@ -1,6 +1,7 @@
 import { Sidebar } from './components/Sidebar';
 import { NoteEditor } from './components/NoteEditor';
 import { NotebookView } from './components/NotebookView';
+import { ArtPanel } from './components/ArtPanel';
 import { useNotebook } from './store/useNotebook';
 import './App.css';
 
@@ -12,6 +13,7 @@ function App() {
     viewMode,
     searchQuery,
     allTags,
+    useServer,
     setActiveNoteId,
     setViewMode,
     setSearchQuery,
@@ -29,6 +31,7 @@ function App() {
         viewMode={viewMode}
         searchQuery={searchQuery}
         allTags={allTags}
+        useServer={useServer}
         onSelectNote={setActiveNoteId}
         onCreateNote={createNote}
         onDeleteNote={deleteNote}
@@ -47,9 +50,13 @@ function App() {
             </div>
             <h2>Welcome to AuraHome</h2>
             <p>Your notes, beautifully connected.</p>
+            <p className="welcome-sub">Jot down your thoughts — watch them become art.</p>
             <button className="btn-start" onClick={createNote}>
               Start a new note
             </button>
+            {useServer && (
+              <span className="server-badge">Cloud synced</span>
+            )}
           </div>
         ) : (
           <div className="workspace">
@@ -68,6 +75,19 @@ function App() {
                   onToggleCheck={blockId => toggleCheckItem(activeNote.id, blockId)}
                 />
               </div>
+            )}
+            {viewMode === 'art' && (
+              <>
+                <div className="pane editor-pane" style={{ maxWidth: '40%' }}>
+                  <NoteEditor
+                    rawText={activeNote.rawText}
+                    onChange={text => updateNoteText(activeNote.id, text)}
+                  />
+                </div>
+                <div className="pane art-pane">
+                  <ArtPanel note={activeNote} />
+                </div>
+              </>
             )}
           </div>
         )}
