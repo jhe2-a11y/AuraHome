@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { queries } from './db.js';
+import { queries, rowToNote } from './db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,18 +18,7 @@ app.use(express.static(path.join(process.cwd(), 'dist')));
 app.get('/api/notes', (_req, res) => {
   try {
     const rows = queries.getAll.all();
-    const notes = rows.map(row => ({
-      id: row.id,
-      title: row.title,
-      rawText: row.raw_text,
-      tags: JSON.parse(row.tags),
-      linkedNoteIds: JSON.parse(row.linked_note_ids),
-      color: row.color,
-      emoji: row.emoji,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }));
-    res.json(notes);
+    res.json(rows.map(rowToNote));
   } catch (err) {
     console.error('GET /api/notes error:', err);
     res.status(500).json({ error: 'Failed to fetch notes' });
@@ -41,17 +30,7 @@ app.get('/api/notes/:id', (req, res) => {
   try {
     const row = queries.getById.get(req.params.id);
     if (!row) return res.status(404).json({ error: 'Note not found' });
-    res.json({
-      id: row.id,
-      title: row.title,
-      rawText: row.raw_text,
-      tags: JSON.parse(row.tags),
-      linkedNoteIds: JSON.parse(row.linked_note_ids),
-      color: row.color,
-      emoji: row.emoji,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
+    res.json(rowToNote(row));
   } catch (err) {
     console.error('GET /api/notes/:id error:', err);
     res.status(500).json({ error: 'Failed to fetch note' });
@@ -62,8 +41,11 @@ app.get('/api/notes/:id', (req, res) => {
 app.post('/api/notes', (req, res) => {
   try {
     const { id, title, rawText, tags, linkedNoteIds, color, emoji, createdAt, updatedAt } = req.body;
+    if (!id) return res.status(400).json({ error: 'Note ID is required' });
     queries.insert.run(
-      id, title, rawText || '',
+      id,
+      title || 'Untitled Note',
+      rawText || '',
       JSON.stringify(tags || []),
       JSON.stringify(linkedNoteIds || []),
       color || '#7c5cff',
@@ -81,13 +63,16 @@ app.post('/api/notes', (req, res) => {
 // PUT update note
 app.put('/api/notes/:id', (req, res) => {
   try {
+    const existing = queries.getById.get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Note not found' });
+
     const { title, rawText, tags, linkedNoteIds } = req.body;
     const now = Date.now();
     queries.update.run(
-      title || 'Untitled Note',
-      rawText || '',
-      JSON.stringify(tags || []),
-      JSON.stringify(linkedNoteIds || []),
+      title ?? existing.title,
+      rawText ?? existing.raw_text,
+      tags ? JSON.stringify(tags) : existing.tags,
+      linkedNoteIds ? JSON.stringify(linkedNoteIds) : existing.linked_note_ids,
       now,
       req.params.id
     );
@@ -101,6 +86,10 @@ app.put('/api/notes/:id', (req, res) => {
 // DELETE note
 app.delete('/api/notes/:id', (req, res) => {
   try {
+    const existing = queries.exists.get(req.params.id);
+    if (!existing || existing.count === 0) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
     queries.delete.run(req.params.id);
     res.json({ deleted: true });
   } catch (err) {
@@ -109,8 +98,8 @@ app.delete('/api/notes/:id', (req, res) => {
   }
 });
 
-// SPA fallback
-app.get('/{*splat}', (_req, res) => {
+// SPA fallback — must come after API routes
+app.use((_req, res) => {
   res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
 });
 

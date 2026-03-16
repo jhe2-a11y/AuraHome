@@ -949,6 +949,135 @@
   opacity: 0.5;
 }
 
+/* Art transitions */
+.art-stage {
+  transition: opacity 0.25s ease;
+}
+
+.art-transitioning {
+  opacity: 0.15;
+}
+
+/* Related Notes */
+.related-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-icon {
+  font-size: 12px;
+}
+
+.related-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.related-card {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.related-card:first-child {
+  border-top: none;
+}
+
+.related-card:hover {
+  background: var(--bg-hover);
+}
+
+.related-card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.related-emoji {
+  font-size: 12px;
+}
+
+.related-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.related-reason {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.related-score-bar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.related-score-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--pink));
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+/* Note Clusters */
+.note-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.note-cluster + .note-cluster {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cluster-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.cluster-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.cluster-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+}
+
 /* Server sync badge */
 .sync-dot {
   width: 8px;

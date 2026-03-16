@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Note } from '../types/note';
 import { ArtCanvas } from './ArtCanvas';
 
@@ -16,7 +16,24 @@ const ART_MODES: { mode: ArtMode; label: string; icon: string; desc: string }[] 
 
 export function ArtPanel({ note }: ArtPanelProps) {
   const [artMode, setArtMode] = useState<ArtMode>('constellation');
+  const [transitioning, setTransitioning] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
   const hasContent = note.rawText.trim().length > 0;
+
+  const switchMode = (newMode: ArtMode) => {
+    if (newMode === artMode) return;
+    setTransitioning(true);
+    // Brief fade-out, then switch, then fade-in
+    setTimeout(() => {
+      setArtMode(newMode);
+      setTimeout(() => setTransitioning(false), 50);
+    }, 200);
+  };
+
+  // Reset transition state if note changes
+  useEffect(() => {
+    setTransitioning(false);
+  }, [note.id]);
 
   return (
     <div className="art-panel">
@@ -27,7 +44,7 @@ export function ArtPanel({ note }: ArtPanelProps) {
             <button
               key={m.mode}
               className={`art-mode-btn ${artMode === m.mode ? 'active' : ''}`}
-              onClick={() => setArtMode(m.mode)}
+              onClick={() => switchMode(m.mode)}
               title={m.desc}
             >
               <span>{m.icon}</span>
@@ -36,7 +53,10 @@ export function ArtPanel({ note }: ArtPanelProps) {
           ))}
         </div>
       </div>
-      <div className="art-stage">
+      <div
+        ref={stageRef}
+        className={`art-stage ${transitioning ? 'art-transitioning' : ''}`}
+      >
         {hasContent ? (
           <ArtCanvas note={note} mode={artMode} />
         ) : (

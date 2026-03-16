@@ -8,12 +8,15 @@ import './App.css';
 function App() {
   const {
     notes,
+    allNotes,
     activeNote,
     activeNoteId,
     viewMode,
     searchQuery,
     allTags,
     useServer,
+    relatedNotes,
+    clusteredNotes,
     setActiveNoteId,
     setViewMode,
     setSearchQuery,
@@ -27,11 +30,14 @@ function App() {
     <div className="app">
       <Sidebar
         notes={notes}
+        allNotes={allNotes}
         activeNoteId={activeNoteId}
         viewMode={viewMode}
         searchQuery={searchQuery}
         allTags={allTags}
         useServer={useServer}
+        relatedNotes={relatedNotes}
+        clusteredNotes={clusteredNotes}
         onSelectNote={setActiveNoteId}
         onCreateNote={createNote}
         onDeleteNote={deleteNote}

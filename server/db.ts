@@ -5,7 +5,6 @@ const DB_PATH = path.join(process.cwd(), 'aurahome.db');
 
 const db = new Database(DB_PATH);
 
-// Enable WAL mode for better concurrent read performance
 db.pragma('journal_mode = WAL');
 
 db.exec(`
@@ -36,13 +35,35 @@ export interface NoteRow {
   updated_at: number;
 }
 
+function safeParseJSON(str: string, fallback: unknown = []): unknown {
+  try {
+    return JSON.parse(str);
+  } catch {
+    return fallback;
+  }
+}
+
+export function rowToNote(row: NoteRow) {
+  return {
+    id: row.id,
+    title: row.title,
+    rawText: row.raw_text,
+    tags: safeParseJSON(row.tags, []) as string[],
+    linkedNoteIds: safeParseJSON(row.linked_note_ids, []) as string[],
+    color: row.color,
+    emoji: row.emoji,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export const queries = {
   getAll: db.prepare<[], NoteRow>('SELECT * FROM notes ORDER BY updated_at DESC'),
 
   getById: db.prepare<[string], NoteRow>('SELECT * FROM notes WHERE id = ?'),
 
   insert: db.prepare<[string, string, string, string, string, string, string, number, number]>(
-    `INSERT INTO notes (id, title, raw_text, tags, linked_note_ids, color, emoji, created_at, updated_at)
+    `INSERT OR REPLACE INTO notes (id, title, raw_text, tags, linked_note_ids, color, emoji, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ),
 
@@ -51,6 +72,8 @@ export const queries = {
   ),
 
   delete: db.prepare<[string]>('DELETE FROM notes WHERE id = ?'),
+
+  exists: db.prepare<[string], { count: number }>('SELECT COUNT(*) as count FROM notes WHERE id = ?'),
 };
 
 export default db;

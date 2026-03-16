@@ -31,13 +31,13 @@ function extractTags(line: string): string[] {
 
 function detectIcon(line: string): string | undefined {
   const lower = line.toLowerCase();
-  if (lower.includes('important') || lower.includes('!!' )) return ICONS.important;
-  if (lower.includes('?') && lower.length < 120) return ICONS.question;
+  if (lower.includes('important') || lower.startsWith('!!')) return ICONS.important;
+  if (lower.includes('?') && lower.length < 80) return ICONS.question;
   if (lower.includes('idea') || lower.includes('💡')) return ICONS.idea;
-  if (lower.includes('warn') || lower.includes('careful')) return ICONS.warning;
-  if (lower.includes('define') || lower.includes('definition') || lower.includes(' means ') || lower.includes(' is ')) return ICONS.definition;
-  if (lower.includes('key') || lower.includes('remember')) return ICONS.key;
-  if (lower.includes('link') || lower.includes('http')) return ICONS.link;
+  if (lower.includes('warning') || lower.includes('careful')) return ICONS.warning;
+  if (lower.startsWith('def') || lower.includes('definition')) return ICONS.definition;
+  if (lower.includes('remember')) return ICONS.key;
+  if (/https?:\/\//.test(lower)) return ICONS.link;
   return undefined;
 }
 
@@ -52,26 +52,32 @@ export function parseNotes(rawText: string): NoteBlock[] {
   const lines = rawText.split('\n');
   const blocks: NoteBlock[] = [];
   let colorIndex = 0;
+  let lastWasDivider = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
+
+    // Collapse consecutive empty lines into a single divider
     if (!trimmed) {
-      // Empty line becomes a subtle divider
-      blocks.push({
-        id: uuidv4(),
-        type: 'divider',
-        content: '',
-        indent: 0,
-        tags: [],
-      });
+      if (!lastWasDivider && blocks.length > 0) {
+        blocks.push({
+          id: uuidv4(),
+          type: 'divider',
+          content: '',
+          indent: 0,
+          tags: [],
+        });
+        lastWasDivider = true;
+      }
       continue;
     }
+    lastWasDivider = false;
 
     const indent = measureIndent(line);
     const tags = extractTags(trimmed);
     const icon = detectIcon(trimmed);
 
-    // Heading detection: lines starting with # or ALL CAPS short lines
+    // Heading: lines starting with #
     if (trimmed.startsWith('#')) {
       const content = trimmed.replace(/^#+\s*/, '');
       blocks.push({
@@ -86,7 +92,13 @@ export function parseNotes(rawText: string): NoteBlock[] {
       continue;
     }
 
-    if (trimmed === trimmed.toUpperCase() && trimmed.length < 60 && trimmed.length > 1 && /[A-Z]/.test(trimmed)) {
+    // Heading: ALL CAPS lines (require 3+ chars and at least 2 alpha chars)
+    if (
+      trimmed === trimmed.toUpperCase() &&
+      trimmed.length >= 3 &&
+      trimmed.length < 60 &&
+      (trimmed.match(/[A-Z]/g) || []).length >= 2
+    ) {
       blocks.push({
         id: uuidv4(),
         type: 'heading',
@@ -99,7 +111,7 @@ export function parseNotes(rawText: string): NoteBlock[] {
       continue;
     }
 
-    // Checklist detection: lines starting with [ ], [x], - [ ], - [x], TODO, DONE
+    // Checklist: [ ], [x], TODO:, DONE:
     if (/^(-\s*)?\[[ x]\]/i.test(trimmed) || /^(TODO|DONE):/i.test(trimmed)) {
       const checked = /\[x\]/i.test(trimmed) || /^DONE:/i.test(trimmed);
       const content = trimmed
@@ -117,9 +129,9 @@ export function parseNotes(rawText: string): NoteBlock[] {
       continue;
     }
 
-    // Quote detection: lines starting with > or "
-    if (trimmed.startsWith('>') || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
-      const content = trimmed.replace(/^>\s*/, '').replace(/^"|"$/g, '');
+    // Quote: lines starting with >
+    if (trimmed.startsWith('>')) {
+      const content = trimmed.replace(/^>\s*/, '');
       blocks.push({
         id: uuidv4(),
         type: 'quote',
@@ -132,8 +144,23 @@ export function parseNotes(rawText: string): NoteBlock[] {
       continue;
     }
 
-    // Highlight detection: lines wrapped in ** or !! prefix
-    if ((trimmed.startsWith('**') && trimmed.endsWith('**')) || trimmed.startsWith('!!')) {
+    // Quote: wrapped in double quotes
+    if (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length > 2) {
+      const content = trimmed.slice(1, -1);
+      blocks.push({
+        id: uuidv4(),
+        type: 'quote',
+        content,
+        indent,
+        tags,
+        icon: '💬',
+        color: '#636e72',
+      });
+      continue;
+    }
+
+    // Highlight: !! prefix or **wrapped**
+    if (trimmed.startsWith('!!') || (trimmed.startsWith('**') && trimmed.endsWith('**') && trimmed.length > 4)) {
       const content = trimmed.replace(/^\*\*|\*\*$/g, '').replace(/^!!\s*/, '');
       blocks.push({
         id: uuidv4(),
@@ -147,11 +174,13 @@ export function parseNotes(rawText: string): NoteBlock[] {
       continue;
     }
 
-    // Definition detection: lines with " - ", " : ", " = " pattern
-    if (/^.{1,40}\s*[-:=]\s+.+/.test(trimmed) && (trimmed.includes(' - ') || trimmed.includes(': ') || trimmed.includes(' = '))) {
-      const separator = trimmed.includes(' - ') ? ' - ' : trimmed.includes(': ') ? ': ' : ' = ';
-      const parts = trimmed.split(separator);
-      if (parts.length >= 2 && parts[0].length < 40) {
+    // Definition: "term: definition" or "term - definition"
+    // Term must be 1-4 words (no more than 35 chars), followed by separator
+    const defMatch = trimmed.match(/^([A-Za-z][A-Za-z0-9 ]{0,34}?)\s*(?::\s+|-\s+|=\s+)(.+)/);
+    if (defMatch) {
+      const term = defMatch[1].trim();
+      const termWords = term.split(/\s+/).length;
+      if (termWords <= 4 && defMatch[2].length > 0) {
         blocks.push({
           id: uuidv4(),
           type: 'definition',
@@ -165,7 +194,7 @@ export function parseNotes(rawText: string): NoteBlock[] {
       }
     }
 
-    // Default: bullet point
+    // Default: bullet
     const content = trimmed.replace(/^[-*•]\s*/, '');
     blocks.push({
       id: uuidv4(),

@@ -1,14 +1,22 @@
 const API_BASE = '/api';
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(`${API_BASE}${url}`, {
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      ...options,
+    });
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
   }
-  return res.json();
 }
 
 export interface NotePayload {
